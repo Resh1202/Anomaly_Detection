@@ -1,4 +1,3 @@
-# detection_models.py
 from sklearn.ensemble import IsolationForest
 from sklearn.svm import OneClassSVM
 from sklearn.neighbors import LocalOutlierFactor
@@ -24,4 +23,3 @@ def run_lof(X, contamination):
     model = LocalOutlierFactor(contamination=contamination)
     labels = model.fit_predict(X)
     return model, None, labels
-
