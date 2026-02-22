@@ -1,10 +1,26 @@
+# detection_models.py
 from sklearn.ensemble import IsolationForest
+from sklearn.svm import OneClassSVM
+from sklearn.neighbors import LocalOutlierFactor
+from config_settings import RANDOM_STATE
 
-def detect_anomalies(model_name, data, contamination=0.05):
+def run_isolation_forest(X, contamination, n_estimators):
+    model = IsolationForest(
+        contamination=contamination,
+        n_estimators=n_estimators,
+        random_state=RANDOM_STATE
+    )
+    model.fit(X)
+    scores = model.decision_function(X)
+    labels = model.predict(X)
+    return model, scores, labels
 
-    if model_name == "Isolation Forest":
-        model = IsolationForest(contamination=contamination, random_state=42)
-        labels = model.fit_predict(data)
-        scores = model.decision_function(data)
+def run_oneclass_svm(X, contamination):
+    model = OneClassSVM(nu=contamination)
+    labels = model.fit_predict(X)
+    return model, None, labels
 
-    return labels, scores
+def run_lof(X, contamination):
+    model = LocalOutlierFactor(contamination=contamination)
+    labels = model.fit_predict(X)
+    return model, None, labels
