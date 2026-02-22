@@ -1,4 +1,3 @@
-# visualization_tools.py
 import matplotlib.pyplot as plt
 
 def plot_score_distribution(scores):
