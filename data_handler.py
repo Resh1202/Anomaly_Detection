@@ -1,18 +1,10 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 
-def load_data(file):
-    if file.name.endswith(".csv"):
-        return pd.read_csv(file)
-    else:
-        return pd.read_excel(file)
-
-def clean_data(df):
-    df = df.drop_duplicates()
-    df = df.fillna(df.mean(numeric_only=True))
+def load_uploaded_file(uploaded_file):
+    df = pd.read_csv(uploaded_file)
     return df
 
-def scale_features(df, selected_columns):
-    scaler = StandardScaler()
-    scaled = scaler.fit_transform(df[selected_columns])
-    return scaled
+def basic_validation(df):
+    if df.isnull().sum().sum() > 0:
+        df = df.dropna()
+    return df
