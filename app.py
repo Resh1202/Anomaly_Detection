@@ -10,7 +10,7 @@ from utils import filter_anomalies
 
 st.set_page_config(page_title="Explainable Anomaly Detection", layout="wide")
 
-st.title("🚀 Explainable Anomaly Detection Platform")
+st.title("Explainable Anomaly Detection Platform")
 
 file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"])
 
@@ -66,4 +66,5 @@ if file:
                 "Download Anomaly Report",
                 f,
                 file_name="anomaly_report.xlsx"
+
             )
