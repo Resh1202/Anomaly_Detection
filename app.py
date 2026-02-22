@@ -1,16 +1,15 @@
-# main_dashboard.py
 import streamlit as st
 import pandas as pd
 
-from data_loader import load_uploaded_file, basic_validation
-from feature_pipeline import scale_features, apply_pca
+from data_handler import load_uploaded_file, basic_validation
+from features import scale_features, apply_pca
 from detection_models import run_isolation_forest, run_oneclass_svm, run_lof
-from explainability_core import get_feature_importance
-from evaluation_metrics import show_classification_metrics, plot_roc_curve
-from visualization_tools import plot_score_distribution, plot_pca_projection
+from explainability import get_feature_importance
+from evaluation import show_classification_metrics, plot_roc_curve
+from visualization import plot_score_distribution, plot_pca_projection
 from config_settings import DEFAULT_CONTAMINATION, DEFAULT_TREES
 
-st.title("FraudLens AI - Explainable Anomaly Detection")
+st.title("Explainable Anomaly Detection System")
 
 st.sidebar.header("Model Settings")
 
@@ -43,9 +42,13 @@ if uploaded_file:
             X_scaled, contamination, n_estimators
         )
     elif model_choice == "One-Class SVM":
-        model, scores, labels = run_oneclass_svm(X_scaled, contamination)
+        model, scores, labels = run_oneclass_svm(
+            X_scaled, contamination
+        )
     else:
-        model, scores, labels = run_lof(X_scaled, contamination)
+        model, scores, labels = run_lof(
+            X_scaled, contamination
+        )
 
     df["Anomaly_Label"] = labels
 
