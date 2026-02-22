@@ -27,7 +27,7 @@ if file:
 
     model_name = st.selectbox(
         "Select Model",
-        ["Isolation Forest", "Local Outlier Factor", "One-Class SVM"]
+        ["Isolation Forest"]
     )
 
     contamination = st.slider("Contamination", 0.01, 0.2, 0.05)
@@ -68,3 +68,4 @@ if file:
                 file_name="anomaly_report.xlsx"
 
             )
+
