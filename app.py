@@ -1,72 +1,77 @@
+# main_dashboard.py
 import streamlit as st
 import pandas as pd
-import time
 
-from data_handler import load_data, clean_data, scale_features
-from models import detect_anomalies
-from visualization import plot_pca, plot_scores
-from explainability import explain_anomalies
-from utils import filter_anomalies
+from data_loader import load_uploaded_file, basic_validation
+from feature_pipeline import scale_features, apply_pca
+from detection_models import run_isolation_forest, run_oneclass_svm, run_lof
+from explainability_core import get_feature_importance
+from evaluation_metrics import show_classification_metrics, plot_roc_curve
+from visualization_tools import plot_score_distribution, plot_pca_projection
+from config_settings import DEFAULT_CONTAMINATION, DEFAULT_TREES
 
-st.set_page_config(page_title="Explainable Anomaly Detection", layout="wide")
+st.title("FraudLens AI - Explainable Anomaly Detection")
 
-st.title("Explainable Anomaly Detection Platform")
+st.sidebar.header("Model Settings")
 
-file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"])
+model_choice = st.sidebar.selectbox(
+    "Select Model",
+    ["Isolation Forest", "One-Class SVM", "LOF"]
+)
 
-if file:
+contamination = st.sidebar.slider(
+    "Contamination", 0.001, 0.1, DEFAULT_CONTAMINATION
+)
 
-    df = load_data(file)
-    st.subheader("Dataset Preview")
-    st.dataframe(df.head())
+n_estimators = st.sidebar.slider(
+    "Number of Trees", 100, 500, DEFAULT_TREES
+)
 
-    df = clean_data(df)
+uploaded_file = st.file_uploader("Upload CSV Dataset")
 
-    numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
-    selected_cols = st.multiselect("Select Features", numeric_cols)
+if uploaded_file:
+    df = load_uploaded_file(uploaded_file)
+    df = basic_validation(df)
 
-    model_name = st.selectbox(
-        "Select Model",
-        ["Isolation Forest"]
+    X = df.drop(columns=["Class"], errors="ignore")
+    y = df["Class"] if "Class" in df.columns else None
+
+    X_scaled = scale_features(X)
+
+    if model_choice == "Isolation Forest":
+        model, scores, labels = run_isolation_forest(
+            X_scaled, contamination, n_estimators
+        )
+    elif model_choice == "One-Class SVM":
+        model, scores, labels = run_oneclass_svm(X_scaled, contamination)
+    else:
+        model, scores, labels = run_lof(X_scaled, contamination)
+
+    df["Anomaly_Label"] = labels
+
+    st.subheader("Results Preview")
+    st.write(df.head())
+
+    if scores is not None:
+        st.pyplot(plot_score_distribution(scores))
+
+    X_pca = apply_pca(X_scaled)
+    st.pyplot(plot_pca_projection(X_pca, labels))
+
+    importance_df = get_feature_importance(model, X.columns)
+    if importance_df is not None:
+        st.subheader("Feature Contribution")
+        st.bar_chart(importance_df.set_index("Feature"))
+
+    if y is not None and scores is not None:
+        report, cm = show_classification_metrics(y, labels)
+        st.text(report)
+        st.write("Confusion Matrix")
+        st.write(cm)
+        st.pyplot(plot_roc_curve(y, scores))
+
+    st.download_button(
+        "Download Results",
+        df.to_csv(index=False),
+        "anomaly_results.csv"
     )
-
-    contamination = st.slider("Contamination", 0.01, 0.2, 0.05)
-
-    if selected_cols:
-
-        scaled_data = scale_features(df, selected_cols)
-
-        start = time.time()
-        labels, scores = detect_anomalies(model_name, scaled_data, contamination)
-        end = time.time()
-
-        df["Anomaly"] = labels
-        df["Score"] = scores
-
-        anomalies = filter_anomalies(df)
-
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Records", len(df))
-        col2.metric("Anomalies Detected", len(anomalies))
-        col3.metric("Execution Time (sec)", round(end-start, 4))
-
-        st.subheader("Detected Anomalies")
-        st.dataframe(anomalies)
-
-        plot_pca(scaled_data, labels)
-        plot_scores(scores)
-
-        st.subheader("Feature Contribution (Explainability)")
-        explanation_df = explain_anomalies(df, selected_cols, labels)
-        st.dataframe(explanation_df)
-
-        anomalies.to_excel("anomaly_report.xlsx", index=False)
-        with open("anomaly_report.xlsx", "rb") as f:
-            st.download_button(
-                "Download Anomaly Report",
-                f,
-                file_name="anomaly_report.xlsx"
-
-            )
-
-
