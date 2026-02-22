@@ -1,16 +1,14 @@
-import streamlit as st
+# visualization_tools.py
 import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
 
-def plot_pca(data, labels):
-    pca = PCA(n_components=2)
-    pca_data = pca.fit_transform(data)
+def plot_score_distribution(scores):
+    plt.figure()
+    plt.hist(scores, bins=50)
+    plt.title("Anomaly Score Distribution")
+    return plt
 
-    fig, ax = plt.subplots()
-    scatter = ax.scatter(pca_data[:,0], pca_data[:,1], c=labels, cmap='coolwarm')
-    ax.set_title("PCA Anomaly Visualization")
-    st.pyplot(fig)
-
-def plot_scores(scores):
-    st.subheader("Anomaly Scores")
-    st.line_chart(scores)
+def plot_pca_projection(X_pca, labels):
+    plt.figure()
+    plt.scatter(X_pca[:, 0], X_pca[:, 1], c=labels)
+    plt.title("2D PCA Projection")
+    return plt
